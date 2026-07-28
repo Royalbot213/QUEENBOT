@@ -170,6 +170,9 @@ class TgCall(PyTgCalls):
             else:
                 await client.play(chat_id, stream)
 
+            # Wait for WebRTC connection setup to establish fully (approx 2.0 seconds)
+            await asyncio.sleep(2.0)
+
             media.played_at = time.time()
             if seek_time:
                 media.time = seek_time
