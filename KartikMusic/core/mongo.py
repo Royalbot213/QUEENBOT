@@ -1,4 +1,3 @@
-from motor.motor_asyncio import AsyncIOMotorClient
 from config import MONGO_DB_URI
 # MONGO_DB_NAME is optional in config; load if present
 try:
@@ -28,13 +27,23 @@ class MongoDB:
         self.client = None
         self.db = None
 
+    def _ensure_motor(self):
+        try:
+            from motor.motor_asyncio import AsyncIOMotorClient
+            return AsyncIOMotorClient
+        except ImportError as e:
+            raise RuntimeError(
+                "Missing dependency 'motor'. Add 'motor' to requirements.txt and redeploy."
+            ) from e
+
     def connect(self):
         """Create AsyncIOMotorClient and set the `db` attribute to a Database object.
-        This is synchronous and safe to call at import time (the client does not block).
+        This will import motor lazily and raise a clear error if it's missing.
         """
         if self.client is None:
             if not self._uri:
                 raise RuntimeError("MONGO_DB_URI is not set in config")
+            AsyncIOMotorClient = self._ensure_motor()
             self.client = AsyncIOMotorClient(self._uri)
             # Prefer DB from URI if present
             self.db = self.client.get_default_database()
@@ -55,22 +64,33 @@ class MongoDB:
 
 
 # Module-level instance for backward compatibility with code that imports `mongodb`.
+# We attempt to create a real motor Database if possible; otherwise expose a lazy wrapper.
 try:
-    _default_client = AsyncIOMotorClient(MONGO_DB_URI)
-    _default_db = _default_client.get_default_database()
-    if _default_db is None:
-        if MONGO_DB_NAME:
-            _default_db = _default_client[MONGO_DB_NAME]
-        else:
-            logger.warning(
-                "No default DB found in MONGO_DB_URI and MONGO_DB_NAME not set in config; using 'Anon'."
-            )
-            _default_db = _default_client["Anon"]
-    mongodb = _default_db
+    try:
+        from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
+    except Exception:
+        AsyncIOMotorClient = None
+
+    if AsyncIOMotorClient is not None:
+        _default_client = AsyncIOMotorClient(MONGO_DB_URI)
+        _default_db = _default_client.get_default_database()
+        if _default_db is None:
+            if MONGO_DB_NAME:
+                _default_db = _default_client[MONGO_DB_NAME]
+            else:
+                logger.warning(
+                    "No default DB found in MONGO_DB_URI and MONGO_DB_NAME not set in config; using 'Anon'."
+                )
+                _default_db = _default_client["Anon"]
+        mongodb = _default_db
+    else:
+        logger.warning(
+            "Package 'motor' not available at import time; MongoDB operations will raise until dependencies are installed."
+        )
+        mongodb = MongoDB()
 except Exception as exc:
     # If the import-time setup fails (e.g., missing config), create a lazy wrapper
     logger.exception("Mongo setup at import failed: %s", exc)
-    # Provide a MongoDB instance that will raise useful errors when used
     mongodb = MongoDB()
 
 # Also export the MongoDB class
