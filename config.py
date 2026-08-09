@@ -1,9 +1,8 @@
 #
-# Copyright (C) 2025-present by TheAloneTeam@Github, < https://github.com/TheAloneTeam >.
+# Copyright (C) 2025-present by Royalbot213, < https://github.com/Royalbot213 >.
 #
-# This file is part of < https://github.com/TheAloneTeam/KartikMusic > project,
+# This file is part of < https://github.com/Royalbot213/QUEENBOT > project,
 # and is released under the "MIT License".
-# Please see < https://github.com/TheAloneTeam/KartikMusic/blob/master/LICENSE >
 #
 # All rights reserved.
 #
@@ -21,7 +20,7 @@ class Config:
         self.API_HASH = getenv("API_HASH")
 
         self.BOT_TOKEN = getenv("BOT_TOKEN")
-        self.MONGO_URL = getenv("MONGO_URL")
+        self.MONGO_DB_URI = getenv("MONGO_URL")
 
         self.LOGGER_ID = int(getenv("LOGGER_ID", 0))
         self.OWNER_ID = int(getenv("OWNER_ID", 0))
@@ -63,7 +62,7 @@ class Config:
                 "API_ID",
                 "API_HASH",
                 "BOT_TOKEN",
-                "MONGO_URL",
+                "MONGO_DB_URI",
                 "LOGGER_ID",
                 "OWNER_ID",
                 "SESSION1",
@@ -74,3 +73,6 @@ class Config:
             raise SystemExit(
                 f"Missing required environment variables: {', '.join(missing)}"
             )
+
+
+config = Config()

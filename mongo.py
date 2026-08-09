@@ -13,15 +13,13 @@
 # -----------------------------------------------
 
 from motor.motor_asyncio import AsyncIOMotorClient
-from config import Config
-
-config = Config()
+from config import config
 
 print("Connecting to your Mongo Database...")
 try:
-    _mongo_async_ = AsyncIOMotorClient(config.MONGO_URL)
+    _mongo_async_ = AsyncIOMotorClient(config.MONGO_DB_URI)
     mongodb = _mongo_async_.QUEENBOT
-    print("Connected to your Mongo Database.")
+    print("✅ Connected to your Mongo Database.")
 except Exception as e:
-    print(f"Failed to connect to your Mongo Database: {e}")
+    print(f"❌ Failed to connect to your Mongo Database: {e}")
     exit()
